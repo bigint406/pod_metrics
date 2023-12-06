@@ -6,24 +6,28 @@ import traceback
 import yaml
 import requests
 requests.packages.urllib3.disable_warnings()
+
+Metrics = {}
+
 locust_metrics = [
-    "avg_response_time",
     "current_rps",
     "current_fail_per_sec",
-    "max_response_time",
-    "ninety_ninth_response_time",
-    "min_response_time",
-    "ninetieth_response_time",
     "num_failures",
     "num_requests"
 ]
-Metrics = {}
-Metrics["pod_cpu_used_nano_persec"] = Gauge("pod_cpu_used_nano_persec", "pod cpu used nanosec persec from command 'kubectl get podmetrics'", ['namespace', "pod", "container"])
+
+metrics = locust_metrics.copy()
 for i in locust_metrics:
     Metrics[i] = Gauge(i, "metrics from locust", ["name"])
 
-metrics = locust_metrics.copy()
+metrics.append('ninety_fifth_response_time')
+Metrics["ninety_fifth_response_time"] = Gauge("ninety_fifth_response_time", "metrics from locust", ["name"])
+
+metrics.append('fiftieth_response_time')
+Metrics["fiftieth_response_time"] = Gauge("fiftieth_response_time", "metrics from locust", ["name"])
+
 metrics.append("pod_cpu_used_nano_persec")
+Metrics["pod_cpu_used_nano_persec"] = Gauge("pod_cpu_used_nano_persec", "pod cpu used nanosec persec from command 'kubectl get podmetrics'", ['namespace', "pod", "container"])
 
 start_http_server(30124)
 
@@ -79,6 +83,20 @@ while True:
             print(e)
             print(req)
         else:
+            if req.json()["current_response_time_percentile_1"] is not None:
+                Metrics["fiftieth_response_time"].labels(name="Aggregated").set(req.json()["current_response_time_percentile_1"])
+                if check_interval == CI:
+                    try:
+                        del labels["fiftieth_response_time"][("Aggregated",)]
+                    except KeyError as e:
+                        pass
+            if req.json()["current_response_time_percentile_2"] is not None:
+                Metrics["ninety_fifth_response_time"].labels(name="Aggregated").set(req.json()["current_response_time_percentile_2"])
+                if check_interval == CI:
+                    try:
+                        del labels["ninety_fifth_response_time"][("Aggregated",)]
+                    except KeyError as e:
+                        pass
             stats = req.json()["stats"]
             for i in stats:
                 for j in locust_metrics:
