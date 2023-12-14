@@ -65,12 +65,12 @@ while True:
                         if cpu_used != '0':
                             cpu_used = cpu_used[:-1]
                         mem_used = con['usage']['memory']
-                        if cpu_used != '0':
-                            cpu_used = cpu_used[:-2]
+                        if mem_used != '0':
+                            mem_used = mem_used[:-2]
 
                         container_name = con['name']
                         Metrics["pod_cpu_used_nano_persec"].labels(namespace=ns, pod=pod_name, container=container_name).set(cpu_used)
-                        Metrics["pod_mem_used_KB"].labels(namespace=ns, pod=pod_name, container=container_name).set(cpu_used)
+                        Metrics["pod_mem_used_KB"].labels(namespace=ns, pod=pod_name, container=container_name).set(mem_used)
                 
                         if check_interval == CI:
                             try:
