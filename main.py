@@ -29,6 +29,9 @@ Metrics["fiftieth_response_time"] = Gauge("fiftieth_response_time", "metrics fro
 metrics.append("pod_cpu_used_nano_persec")
 Metrics["pod_cpu_used_nano_persec"] = Gauge("pod_cpu_used_nano_persec", "pod cpu used nanosec persec from command 'kubectl get podmetrics'", ['namespace', "pod", "container"])
 
+metrics.append("pod_mem_used_KB")
+Metrics["pod_mem_used_KB"] = Gauge("pod_mem_used_KB", "pod cpu used nanosec persec from command 'kubectl get podmetrics'", ['namespace', "pod", "container"])
+
 start_http_server(30124)
 
 CI = 4
@@ -61,12 +64,21 @@ while True:
                         cpu_used = con['usage']['cpu']
                         if cpu_used != '0':
                             cpu_used = cpu_used[:-1]
+                        mem_used = con['usage']['memory']
+                        if cpu_used != '0':
+                            cpu_used = cpu_used[:-2]
+
                         container_name = con['name']
                         Metrics["pod_cpu_used_nano_persec"].labels(namespace=ns, pod=pod_name, container=container_name).set(cpu_used)
+                        Metrics["pod_mem_used_KB"].labels(namespace=ns, pod=pod_name, container=container_name).set(cpu_used)
                 
                         if check_interval == CI:
                             try:
                                 del labels["pod_cpu_used_nano_persec"][(ns, pod_name, container_name)]
+                            except KeyError:
+                                pass
+                            try:
+                                del labels["pod_mem_used_KB"][(ns, pod_name, container_name)]
                             except KeyError:
                                 pass
 
