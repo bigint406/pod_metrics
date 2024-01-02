@@ -89,7 +89,6 @@ while True:
         req = requests.request("get","http://10.112.48.121:8089/stats/requests")
     except requests.exceptions.RequestException as e:
         traceback.print_exc()
-        print(req)
     else:
         if req.status_code != 200:
             print(e)
