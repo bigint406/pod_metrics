@@ -85,8 +85,9 @@ while True:
             except (TypeError, KeyError, yaml.parser.ParserError):
                 traceback.print_exc()
 
+    # locust数据
     try:
-        req = requests.request("get","http://10.112.48.121:8089/stats/requests")
+        req = requests.request("get","http://10.112.48.121:8090/stats/requests")
     except requests.exceptions.RequestException as e:
         traceback.print_exc()
     else:
@@ -111,7 +112,10 @@ while True:
             stats = req.json()["stats"]
             for i in stats:
                 for j in locust_metrics:
-                    Metrics[j].labels(name=i["safe_name"]).set(i[j])
+                    n = i["safe_name"]
+                    if n != "Aggregated":
+                        continue
+                    Metrics[j].labels(name=n).set(i[j])
                     if check_interval == CI:
                         try:
                             del labels[j][(i['safe_name'],)]
