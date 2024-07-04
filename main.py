@@ -82,17 +82,17 @@ while True:
                             except KeyError:
                                 pass
 
-            except (TypeError, KeyError, yaml.parser.ParserError):
+            except (TypeError, KeyError, yaml.parser.ParserError, yaml.scanner.ScannerError):
                 traceback.print_exc()
 
     # locust数据
     try:
         req = requests.request("get","http://10.112.48.121:8090/stats/requests")
     except requests.exceptions.RequestException as e:
-        traceback.print_exc()
+        # traceback.print_exc()
+        pass
     else:
         if req.status_code != 200:
-            print(e)
             print(req)
         else:
             if req.json()["current_response_time_percentile_1"] is not None:
